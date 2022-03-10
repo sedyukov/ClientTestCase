@@ -10,6 +10,7 @@
         <form @submit.prevent="onSubmit">
           <textarea v-model="text">Json here</textarea>
           <button type="submit">Create</button>
+          <div class="error">{{error}}</div>
         </form>
       </div>
       <div class="table" v-show="selectedTab === 'Table'">
@@ -24,6 +25,7 @@
 
 <script>
 import axios from "axios";
+import Ajv from "ajv"
 
 export default {
   data() {
@@ -31,6 +33,8 @@ export default {
       tabs: ['Json', 'Table'],
       selectedTab: 'Json',
       text: "",
+      jsonData: {},
+      error: "",
       saved: [
         {
           "id": 1,
@@ -45,7 +49,6 @@ export default {
           "val": "20"
         }
       ],
-      links: ["1","2","3"]
     }
   },
   methods: {
@@ -54,10 +57,11 @@ export default {
         this.sendData(this.text)
       }
     },
-    print(){
-      console.log(links)
-    },
     async sendData() {
+      if (!this.validateJson()) {
+        this.error = "This text is not a valid JSON"
+        return
+      }
       try {
         await axios
             .post('http://172.20.10.3:5000/api/json/add', JSON.parse(this.text), {
@@ -70,11 +74,41 @@ export default {
         console.log(error)
       }
     },
+    validateJson() {
+      try {
+        const data = JSON.parse(this.text)
+        const ajv = new Ajv()
+        const schema = {
+          type: "array",
+          minItems: 1,
+          items : {
+            type: "object",
+            properties: {
+              id: {type: "integer"},
+              val: {type: "number"}
+            },
+            required: ["id", "val"],
+            additionalProperties: false,
+          }
+        }
+        const validate = ajv.compile(schema)
+        const valid = validate(data)
+        if (!valid) console.log(validate.errors)
+        else this.error = ""
+        return valid
+      } catch (error) {
+        console.log(error)
+      }
+    }
   }
 }
 </script>
 
 <style scoped>
+.error {
+  color: red;
+  margin-top: 1rem;
+}
 .activeTab {
   color: #16C0B0;
   text-decoration: underline;
