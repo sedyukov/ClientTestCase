@@ -44,42 +44,32 @@ export default {
           "id": 3,
           "val": "20"
         }
-      ]
+      ],
+      links: ["1","2","3"]
     }
   },
   methods: {
     onSubmit() {
       if (this.text.trim()) {
-        this.sendJson(this.text)
-        //this.text = ""
+        this.sendData(this.text)
       }
     },
-    async sendData() {
-      axios.post('http://172.20.10.3:5000/api/json/add', {
-        text: "Your legend",
-        link: "link",
-      })
-          .then(function (response) {
-            console.log(response)
-          })
+    print(){
+      console.log(links)
     },
-    async sendJson() {
+    async sendData() {
       try {
-        console.log(this.text)
-        await fetch('/api/json/add', {
-          method: 'POST',
-          body: JSON.stringify(this.text),
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
-            .then(response => response.json())
-            .then(json => this.saved = json)
+        await axios
+            .post('http://172.20.10.3:5000/api/json/add', JSON.parse(this.text), {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            })
+            .then((json) => (this.saved = json.data))
       } catch (error) {
         console.log(error)
       }
-    }
-
+    },
   }
 }
 </script>
